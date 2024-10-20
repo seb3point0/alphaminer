@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_NAME: ${PROJECT_NAME}
+        WEB_PORT: ${WEB_PORT}
+    container_name: ${PROJECT_NAME}_web
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME}
+      - WEB_PORT=${WEB_PORT}
+    ports:
+      - "${WEB_PORT}:${WEB_PORT}"
+    volumes:
+      - .:/${PROJECT_NAME}
+    command: uvicorn app.main:app --host 0.0.0.0 --port $WEB_PORT --reload
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_NAME: ${PROJECT_NAME}
+    container_name: ${PROJECT_NAME}_celery_worker
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+    volumes:
+      - .:/${PROJECT_NAME}
+    command: celery -A app.celery_app worker --loglevel=info
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_NAME: ${PROJECT_NAME}
+    container_name: ${PROJECT_NAME}_flower
+    command: celery -A app.celery_app flower --port=${FLOWER_PORT}
+    ports:
+      - "${FLOWER_PORT}:${FLOWER_PORT}"
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}

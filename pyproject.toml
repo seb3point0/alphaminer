@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "alphaminer"
+version = "0.1.0"
+description = ""
+authors = ["Sebastien Couture <sebastien@interop.ventures>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.2"
+uvicorn = "^0.32.0"
+celery = "^5.4.0"
+redis = "^5.1.1"
+flower = "^2.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
