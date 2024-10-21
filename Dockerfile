@@ -1,24 +1,23 @@
-ARG PROJECT_NAME
-ARG WEB_PORT=8000  # Default port if not provided during build
-
 FROM python:3.11-slim
 
 ENV PROJECT_NAME=${PROJECT_NAME}
 ENV WEB_PORT=${WEB_PORT}
 
-WORKDIR /${PROJECT_NAME}
+WORKDIR /app
 
-COPY pyproject.toml poetry.lock /${PROJECT_NAME}/
+RUN apt-get -y update \
+    && apt-get -y install curl \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install poetry
+COPY poetry.lock /app
+COPY pyproject.toml /app
+
+RUN pip install --no-cache-dir poetry==1.8.1
 
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-dev
+    && poetry install --no-dev \
+    && pip install --no-cache-dir uvicorn==0.32.0
 
-COPY ./app /${PROJECT_NAME}/app
+COPY ./app /app
 
-# Expose a default port or use the one passed via the build argument
-EXPOSE ${WEB_PORT}
-
-# Use shell form to ensure environment variable expansion
-CMD uvicorn app.main:app --host 0.0.0.0 --port $WEB_PORT --reload
+HEALTHCHECK CMD curl --fail http://0.0.0.0:${WEB_PORT}/health || exit 1
