@@ -21,3 +21,18 @@ ps:
 
 logs-%:
 	docker-compose logs $*
+
+kill:
+	docker-compose down --rmi all --volumes --remove-orphans
+
+restart:
+	docker-compose restart
+
+rebuild:
+	docker-compose up --build --force-recreate
+
+clean:
+	docker-compose down --volumes --remove-orphans
+
+prune:
+	docker system prune --all --volumes

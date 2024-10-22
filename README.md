@@ -1,7 +1,11 @@
 Todo:
-- [ ] Implement .env variables
+- [x] Implement .env variables
 - [ ] Improve folder structure
-- [ ] Rename celery app
-- [ ] Add Flower
+- [x] Rename celery app
+- [x] Add Flower
 - [ ] Add Postgres backend
-- [ ] Add container names
+- [x] Add container names
+- [x] .env vars in settings
+- [ ] Make container root folder PROJECT_NAME
+- [ ] Celery config (/usr/local/lib/python3.11/site-packages/celery/platforms.py:829: SecurityWarning: You're running the worker with superuser privileges: this is absolutely not recommended!)
+- [ ] Redis (Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf)

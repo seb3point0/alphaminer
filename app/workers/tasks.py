@@ -1,4 +1,4 @@
-from app.workers.celery_app import celery_app
+from app.celery import celery_app
 import time
 
 # Example task that simulates some processing work
