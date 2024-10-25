@@ -24,7 +24,7 @@
                                     "token_ratio": {"type": "string", "description": "Token ratio or token warrant ratio [e.g., `1:1`, `1:2`]"},
                                     "committed": {"type": "string", "description": "Amount committed [e.g., $500k]"},
                                     "vesting": {"type": "string", "description": "Vesting terms for tokens [e.g., `12 month cliff, 24 month linear vesting`, `5% unlocked at launch, 95% 3 months cliff and 12 months linear unlock`]"},
-                                    "investors": {"type": "string", "description": "Comma-separated list of investors (funds and angels)"}
+                                    "investors": { "type": "string", "description": "Comma-separated list of investors (funds and angels). Recognize terms like 'investor', 'funding partner', 'backers', 'backed by' as indications that subsequent names belong here." }
                                 }
                             },
                             "links": {
