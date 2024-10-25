@@ -28,4 +28,4 @@ celery_app.conf.update(
 # }
 
 # Discover tasks from tasks.py (auto-discover if in a package)
-celery_app.autodiscover_tasks(["app.workers.tasks"])
+# celery_app.autodiscover_tasks(["app.tasks.ai_tasks"])
