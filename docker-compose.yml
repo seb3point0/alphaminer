@@ -10,7 +10,6 @@ services:
     env_file:
       - .env
     depends_on:
-      # - postgres
       - redis
     stdin_open: true
     tty: true
@@ -30,7 +29,6 @@ services:
       - .env
     depends_on:
       - redis
-      # - postgres
 
   redis:
     image: redis:7.2-alpine
@@ -58,20 +56,6 @@ services:
       - redis
       - celery
 
-  # postgres:
-  #   image: postgres:13.13
-  #   environment:
-  #     - .env
-  #   ports:
-  #     - ${POSTGRES_PORT}:${POSTGRES_PORT}
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
   redis-commander:
     image: rediscommander/redis-commander:latest
     container_name: redis-commander
@@ -87,5 +71,4 @@ services:
         condition: service_healthy
 
 volumes:
-  # postgres_data:
   redis_data:
