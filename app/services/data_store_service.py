@@ -2,30 +2,35 @@ import json
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-
+from enum import Enum
+from typing import Dict, Any, List
 from redis import asyncio as aioredis
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+class ProcessingStatus(Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 class DataStoreService:
     def __init__(self, redis_url: str):
         self.redis = aioredis.from_url(redis_url)
-        self.key_ttl = 60 * 60 * 24  # 24 hours
+        self.key_ttl = settings.REDIS_KEY_TTL
 
     async def store_company_data(self, chat_id: str, company_data: Dict[str, Any]) -> List[str]:
-        """
-        Store company data in Redis, creating unique IDs for each company
-        Returns list of company IDs created
-        """
+        """Store company data in Redis with processing status"""
         try:
             company_ids = []
             if "companies" in company_data:
                 for company in company_data["companies"]:
-                    # Generate unique ID for company
-                    company_id = str(uuid.uuid4())
+                    company_id = self._generate_id()
                     company_ids.append(company_id)
                     
+                    logger.debug(f"Processing company: {company['name']}")
+
                     # Store company data
                     company_key = f"company:{company_id}"
                     await self.redis.hset(company_key, mapping={
@@ -33,82 +38,65 @@ class DataStoreService:
                         "summary": company["summary"],
                         "funding": json.dumps(company.get("funding", {})),
                         "chat_id": chat_id,
-                        "created_at": str(datetime.utcnow())
+                        "created_at": str(datetime.utcnow()),
+                        "processing_status": ProcessingStatus.PENDING.value
                     })
                     await self.redis.expire(company_key, self.key_ttl)
 
-                    # Store links separately
+                    # Debug log the incoming data structure
+                    logger.debug(f"Links data: {company.get('links', {})}")
+                    logger.debug(f"Socials data: {company.get('socials', {})}")
+
+                    # Combine links and socials into a single dictionary
+                    all_links = {}
                     if "links" in company:
-                        links_key = f"{company_key}:links"
                         for link_type, link_data in company["links"].items():
-                            if link_data and "link" in link_data:
-                                link_id = await self.redis.incr("link_id_counter")
-                                link_info = {
-                                    "id": link_id,
-                                    "type": link_type,
-                                    "url": link_data["link"],
-                                    "password": link_data.get("password", ""),
-                                    "company_id": company_id
+                            if isinstance(link_data, dict) and link_data.get("link"):
+                                all_links[link_type] = {
+                                    "link": link_data["link"],
+                                    "password": link_data.get("password", "")
                                 }
-                                await self.redis.sadd(links_key, json.dumps(link_info))
-                                await self.redis.expire(links_key, self.key_ttl)
+                                logger.debug(f"Added link: {link_type} -> {link_data['link']}")
 
-                    # Store chat_id to company_id mapping for later reference
-                    chat_companies_key = f"chat:{chat_id}:companies"
-                    await self.redis.sadd(chat_companies_key, company_id)
-                    await self.redis.expire(chat_companies_key, self.key_ttl)
+                    if "socials" in company:
+                        for social_type, url in company["socials"].items():
+                            if url:
+                                all_links[social_type] = {
+                                    "link": url,
+                                    "password": ""
+                                }
+                                logger.debug(f"Added social: {social_type} -> {url}")
 
-            logger.info(f"Stored {len(company_ids)} companies for chat {chat_id}")
+                    logger.debug(f"Combined links: {all_links}")
+
+                    # Store all links
+                    for link_type, link_data in all_links.items():
+                        link_id = self._generate_id()
+                        link_key = f"link:{link_id}"
+
+                        link_mapping = {
+                            "id": str(link_id),
+                            "type": link_type,
+                            "url": link_data["link"],
+                            "password": link_data.get("password", ""),
+                            "company_id": company_id,
+                            "processing_status": ProcessingStatus.PENDING.value,
+                            "last_updated": str(datetime.utcnow())
+                        }
+
+                        logger.debug(f"Storing link {link_id}: {link_mapping}")
+
+                        await self.redis.hset(link_key, mapping=link_mapping)
+                        await self.redis.expire(link_key, self.key_ttl)
+                        await self.redis.sadd(f"{company_key}:link_ids", link_id)
+                        await self.redis.sadd("links:pending", link_id)
+
+                    logger.info(f"Stored {len(all_links)} links for company {company_id}")
+
             return company_ids
-
         except Exception as e:
-            logger.error(f"Error storing company data: {str(e)}")
+            logger.error(f"Error storing company data: {str(e)}", exc_info=True)
             return []
 
-    async def get_company_data(self, company_id: str) -> Optional[Dict[str, Any]]:
-        """Retrieve company data from Redis"""
-        try:
-            company_key = f"company:{company_id}"
-            company_data = await self.redis.hgetall(company_key)
-            
-            if not company_data:
-                return None
-
-            # Convert stored JSON strings back to objects
-            if "funding" in company_data:
-                company_data["funding"] = json.loads(company_data["funding"])
-
-            # Get links
-            links_key = f"{company_key}:links"
-            links_data = await self.redis.smembers(links_key)
-            if links_data:
-                company_data["links"] = [json.loads(link) for link in links_data]
-
-            return company_data
-
-        except Exception as e:
-            logger.error(f"Error retrieving company data: {str(e)}")
-            return None
-
-    async def get_companies_by_chat(self, chat_id: str) -> List[str]:
-        """Get all company IDs associated with a chat"""
-        try:
-            chat_companies_key = f"chat:{chat_id}:companies"
-            return [cid.decode() for cid in await self.redis.smembers(chat_companies_key)]
-        except Exception as e:
-            logger.error(f"Error getting companies for chat {chat_id}: {str(e)}")
-            return []
-
-    async def store_scrape_data(self, link_id: int, scrape_data: Dict[str, Any]) -> bool:
-        """Store scraping results"""
-        try:
-            key = f"link:{link_id}:scrape"
-            await self.redis.hset(key, mapping={
-                "content": json.dumps(scrape_data),
-                "timestamp": str(datetime.utcnow())
-            })
-            await self.redis.expire(key, self.key_ttl)
-            return True
-        except Exception as e:
-            logger.error(f"Error storing scrape data: {str(e)}")
-            return False
+    def _generate_id(self) -> str:
+        return str(uuid.uuid4())[:8]

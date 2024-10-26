@@ -9,9 +9,10 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG")
     
     # Redis
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://redis:6379/0")
-    REDIS_MAX_MEMORY: str = os.getenv("REDIS_MAX_MEMORY", "2gb")
-    REDIS_MAX_MEMORY_POLICY: str = os.getenv("REDIS_MAX_MEMORY_POLICY", "allkeys-lru")
+    REDIS_URL: str = os.getenv("REDIS_URL")
+    REDIS_MAX_MEMORY: str = os.getenv("REDIS_MAX_MEMORY")
+    REDIS_MAX_MEMORY_POLICY: str = os.getenv("REDIS_MAX_MEMORY_POLICY")
+    REDIS_KEY_TTL: int = os.getenv("REDIS_KEY_TTL")
     
     # Telegram
     TELEGRAM_TOKEN: str = os.getenv("TELEGRAM_TOKEN")
