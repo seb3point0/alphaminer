@@ -48,7 +48,7 @@ class TelegramService:
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id = update.effective_chat.id
         user_message = update.message.text
-        logger.info(f'User message received from chat {chat_id}: {user_message[:50]}...')
+        logger.info(f'User message received from chat {chat_id}: {user_message}')
         try:
             await update.message.reply_text("Message received, processing...")
             cleaned_message = re.sub(r'\\', '', update.message.text_markdown_v2)
