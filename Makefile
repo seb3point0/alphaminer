@@ -39,3 +39,12 @@ clean:
 
 prune:
 	docker system prune --all --volumes
+
+worker:
+	docker-compose exec celery celery -A app.celery worker --loglevel=info
+
+beat:
+	docker-compose exec celery-beat celery -A app.celery beat --loglevel=info
+
+python:
+	docker-compose exec web python
