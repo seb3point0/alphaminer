@@ -19,6 +19,9 @@ shell:
 ps:
 	docker-compose ps
 
+logs:
+	docker-compose logs
+
 logs-%:
 	docker-compose logs $*
 
