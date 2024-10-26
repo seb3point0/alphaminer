@@ -1,0 +1,134 @@
+[
+    {
+        "name": "extract_company_info",
+        "description": "Extracts an object containing an array of companies, each with its name, summary, website, and investors from a blurb.",
+        "parameters": {
+            "type": "object", 
+            "properties": {
+                "companies": {  
+                    "type": "array",  
+                    "items": { 
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string", "description": "Company or project name"},
+                            "summary": {"type": "string", "description": "Brief summary of the company based on the information provided. Do not include information already extracted [e.g., links, valuation, etc]"},
+                            "funding": {
+                                "type": "object", 
+                                "description": "The company funding details", 
+                                "properties": {
+                                    "stage": {"type": "string", "description": "Fundraise stage or round [e.g., Pre-seed, Seed, Series A]"},
+                                    "type": {"type": "string", "description": "Fundraise structure [e.g., Equity, SAFE, SAFT, Token Sale, Private Sale]"},
+                                    "amount": {"type": "string", "description": "Amount raising [e.g., $1.5m]"},
+                                    "fdv": {"type": "string", "description": "FDV or token valuation [e.g., $40m]"},
+                                    "valuation": {"type": "string", "description": "Equity valuation if different from FDV [e.g., `$20m` for a 1:2 token ratio]"},
+                                    "token_ratio": {"type": "string", "description": "Token ratio or token warrant ratio [e.g., `1:1`, `1:2`]"},
+                                    "committed": {"type": "string", "description": "Amount committed [e.g., $500k]"},
+                                    "vesting": {"type": "string", "description": "Vesting terms for tokens [e.g., `12 month cliff, 24 month linear vesting`, `5% unlocked at launch, 95% 3 months cliff and 12 months linear unlock`]"},
+                                    "investors": { "type": "string", "description": "Comma-separated list of investors (funds and angels). Recognize terms like 'investor', 'funding partner', 'backers', 'backed by' as indications that subsequent names belong here." }
+                                }
+                            },
+                            "links": {
+                                "type": "object",
+                                "description": "Company links",
+                                "properties": {
+                                    "website": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company website"}
+                                        }
+                                    },
+                                    "deck": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company deck: recognize different terms `deck`, `pitch deck`, `pitch` as `deck`); Most common domains are `docsend.com`, `pitch.com`"},
+                                            "password": {"type": "string", "description": "Optional password for the deck"}
+                                        }
+                                    },
+                                    "whitepaper": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company whitepaper: common as `.pdf` file or domain `docsend.com`"},
+                                            "password": {"type": "string", "description": "Optional password for the whitepaper"}
+                                        }
+                                    },
+                                    "blog": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company blog: common domains are `blog.`, `medium.com`, `mirror.xyz`"}
+                                        }
+                                    },
+                                    "demo": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "The company demo"},
+                                            "password": {"type": "string", "description": "Optional password for the demo"}
+                                        }
+                                    },
+                                    "documentation": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company documentation: common domains are `docs.`, `wiki.`, `notion.site`"},
+                                            "password": {"type": "string", "description": "Optional password for the documentation"}
+                                        }
+                                    },
+                                    "data_room": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Data room link: prioritize capturing links when labeled as 'data room', with domains such as docsend.com or notion.site"},
+                                            "password": {"type": "string", "description": "Optional password for the data room"}
+                                        }
+                                    },
+                                    "roadmap": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company roadmap"},
+                                            "password": {"type": "string", "description": "Optional password for the roadmap"}
+                                        }
+                                    },
+                                    "tokenomics": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company tokenomics"},
+                                            "password": {"type": "string", "description": "Optional password for the tokenomics"}
+                                        }
+                                    },
+                                    "calendar": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "Company calendar: recognize different calendar booking services `calendly.com`, `cal.com`, `calendar.app.google.com` as `calendar`"}
+                                        }
+                                    },
+                                    "other": {
+                                        "type": "object",
+                                        "properties": {
+                                            "link": {"type": "string", "description": "The company other links"},
+                                            "password": {"type": "string", "description": "Optional password for other links"}
+                                        }
+                                    }
+                                }
+                            },
+                            "socials": {
+                                "type": "object",
+                                "description": "The company socials",
+                                "properties": {
+                                    "x": {"type": "string", "description": "Company X or Twitter: when `twitter.com`, convert to `x.com`"},
+                                    "linkedin": {"type": "string", "description": "Company LinkedIn: `linkedin.com` domain"},
+                                    "discord": {"type": "string", "description": "Company Discord: `discord.gg` domain"},
+                                    "telegram": {"type": "string", "description": "Company Telegram: `t.me` domain"},
+                                    "github": {"type": "string", "description": "Company Github: `github.com` domain"},
+                                    "youtube": {"type": "string", "description": "Company Youtube: `youtube.com` or `youtu.be` domain"}
+                                }
+                            }
+                        },
+                        "required": ["name", "summary", "funding", "links", "socials"]
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "description": "The status of the request: ['x companies found', ''No companies found']"
+                }
+            },
+            "required": ["companies", "message"]
+        }
+    }
+]
